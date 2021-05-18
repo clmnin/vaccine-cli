@@ -36,10 +36,18 @@ type CenterDetails struct {
 	Slots             []string `json:"slots"`
 }
 
-func GetSchedule(minAge int) []CenterDetails {
+func GetAvailableSessions(districtID int, minAge int) string {
+	centers := getSchedule(districtID, minAge)
+	if len(centers) == 0 {
+		return ""
+	}
+	details := getFormattedCenters(centers)
+	return details
+}
+
+func getSchedule(districtID int, minAge int) []CenterDetails {
 	date := today()
-	districtID := 307
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByDistrict?district_id=%d&date=%s", districtID, date), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf(baseUrl+availabilityByDistrictUrl+"?district_id=%d&date=%s", districtID, date), nil)
 	req.Header.Add("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36")
 	client := http.DefaultClient
 	resp, err := client.Do(req)
@@ -88,4 +96,21 @@ func filterCentersByAgeLimit(center []Center, minAge int) []CenterDetails {
 	}
 
 	return availableCenters
+}
+
+func getFormattedCenters(centers []CenterDetails) string {
+	details := ""
+	for _, center := range centers {
+		details += fmt.Sprintln("Available:", center.AvailableCapacity)
+		details += fmt.Sprintln("Name:", center.Name)
+		details += fmt.Sprintln("Address:", center.Address)
+		details += fmt.Sprintln("Block:", center.BlockName)
+		details += fmt.Sprintln("Date:", center.Date)
+		details += fmt.Sprintln("Vaccine:", center.Vaccine)
+		details += fmt.Sprintln("Slots:", center.Slots)
+		details += fmt.Sprintln("Min Age:", center.MinAge)
+		details += fmt.Sprintln("=========================================")
+		details += fmt.Sprint("\n\n")
+	}
+	return details
 }
